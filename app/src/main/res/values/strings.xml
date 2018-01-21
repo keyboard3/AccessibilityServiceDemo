@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">AccessibilityServiceDemo</string>
+    <string name="accessibility_service_description">accessibility_service_description</string>
+    <string name="accessibility_service_label">辅助开发</string>
+    <string-array name="setting_array">
+        <item>Show layout</item>
+    </string-array>
+</resources>
