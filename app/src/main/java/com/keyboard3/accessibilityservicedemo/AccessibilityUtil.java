@@ -13,7 +13,7 @@ public class AccessibilityUtil {
     public static boolean checkAccessibility(Context context) {
         if (!isAccessibilitySettingOn(context)) {
             context.startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            Toast.makeText(context, "清先开启辅助服务Demo的功能", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "请先开启辅助服务的功能", Toast.LENGTH_SHORT).show();
             return false;
         }
         return true;

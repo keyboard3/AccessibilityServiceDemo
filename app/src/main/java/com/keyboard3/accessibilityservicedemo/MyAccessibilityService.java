@@ -1,6 +1,7 @@
 package com.keyboard3.accessibilityservicedemo;
 
 import android.accessibilityservice.AccessibilityService;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
@@ -21,6 +22,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Queue;
 import java.util.Set;
 
@@ -62,19 +64,57 @@ public class MyAccessibilityService extends AccessibilityService {
         if (TextUtils.isEmpty(detectKey)) {
             return;
         }
-        if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && "com.android.settings".equals(event.getPackageName())) {
-            if (isSub && type == 2) {
-                AccessibilityNodeInfo ListView = event.getSource().getChild(1);
-                if (ListView.getChild(0).isChecked()) {
-                    ListView.getChild(1).performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                } else {
-                    ListView.getChild(0).performAction(AccessibilityNodeInfo.ACTION_CLICK);
+        if ((event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED || event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED||event.getEventType()==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) && "com.android.settings".equals(event.getPackageName())) {
+            Log.d(TAG, "AccessibilityNodeInfo:" + event.getSource().getClassName());
+            if (isSub) {
+                AccessibilityNodeInfo ListView;
+                switch (type) {
+                    case 2:
+                        String overdrawSelectItem = "Show overdraw areas";
+                        if ("zh".equals(Locale.getDefault().getLanguage())) {
+                            overdrawSelectItem = "显示过度";
+                        }
+                        List<AccessibilityNodeInfo> collection = event.getSource().findAccessibilityNodeInfosByText(overdrawSelectItem);
+                        if (collection.size() <= 0) {
+                            return;
+                        }
+                        ListView = collection.get(0).getParent();
+
+                        if (ListView == null || ListView.getChildCount() < 3) {
+                            return;
+                        }
+                        if (ListView.getChild(0).isChecked()) {
+                            ListView.getChild(1).performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                        } else {
+                            ListView.getChild(0).performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                        }
+                        detectKey = "";
+                        performGlobalAction(GLOBAL_ACTION_BACK);
+                        performGlobalAction(GLOBAL_ACTION_BACK);
+                        isSub = false;
+                        return;
+                    case 3:
+                        List<AccessibilityNodeInfo> gpurednerCollection = event.getSource().findAccessibilityNodeInfosByText("adb shell dumpsys gfxinfo");
+                        if (gpurednerCollection.size() <= 0) {
+                            return;
+                        }
+                        ListView = gpurednerCollection.get(0).getParent();
+
+                        if (ListView == null || ListView.getChildCount() < 3) {
+                            return;
+                        }
+                        if (ListView.getChild(0).isChecked()) {
+                            ListView.getChild(1).performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                        } else {
+                            ListView.getChild(0).performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                        }
+                        detectKey = "";
+                        performGlobalAction(GLOBAL_ACTION_BACK);
+                        performGlobalAction(GLOBAL_ACTION_BACK);
+                        isSub = false;
+                        return;
+
                 }
-                detectKey = "";
-                performGlobalAction(GLOBAL_ACTION_BACK);
-                performGlobalAction(GLOBAL_ACTION_BACK);
-                isSub = false;
-                return;
             }
             AccessibilityNodeInfo listViewNodeInfo = findNodeByClassName(event.getSource(), RecyclerView.class.getName(), ListView.class.getName());
             if (listViewNodeInfo != null) {
@@ -101,7 +141,7 @@ public class MyAccessibilityService extends AccessibilityService {
                         parent.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                         detectKey = "";
                         performGlobalAction(GLOBAL_ACTION_BACK);
-                    } else if (type == 2) {
+                    } else if (type == 2||type==3) {
                         parent.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                         isSub = true;
                     }

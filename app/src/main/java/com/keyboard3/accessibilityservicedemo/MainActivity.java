@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btn_layout).setOnClickListener(this);
         findViewById(R.id.btn_overdraw).setOnClickListener(this);
         findViewById(R.id.btn_top).setOnClickListener(this);
+        findViewById(R.id.btn_gpu_mode).setOnClickListener(this);
     }
 
     private void showWindow() {
@@ -69,6 +70,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         key = "布局边界";
                     }
                     EventBus.getDefault().post(new OpenEvent(key, 1));
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.DevelopmentSettings"));
+                    startActivity(intent);
+                }
+                break;
+            case R.id.btn_gpu_mode:
+                if (AccessibilityUtil.checkAccessibility(MainActivity.this)) {
+                    String key = "Profile GPU rendering";//Show layout bounds
+                    if ("zh".equals(Locale.getDefault().getLanguage())) {
+                        String model = android.os.Build.MODEL;
+                        if (model.startsWith("SM")) {
+                            key = "GPU 显示";
+                        } else {
+                            key = "GPU 呈现";
+                        }
+                    }
+                    EventBus.getDefault().post(new OpenEvent(key, 3));
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.DevelopmentSettings"));
                     startActivity(intent);

@@ -30,7 +30,13 @@
             android:id="@+id/btn_overdraw"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="过度绘制" />
+            android:text="过度绘制显示" />
+
+        <Button
+            android:id="@+id/btn_gpu_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="GPU呈现模式" />
     </LinearLayout>
 
 
