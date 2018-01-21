@@ -10,8 +10,10 @@
 
 **布局边界显示**
 <br>AccessibilityService会自己滚动到setting的开发者选项页面里找到布局边界显示项并自动触发<b>
+  
 **过度绘制显示**
 <br>AccessibilityService会自己滚动到setting的开发者选项页面里找到布局边界显示项并自动触发,在弹出的选择框中自动选择关闭和显示过度绘制<br>
+
 **GPU呈现模式**
 <br>AccessibilityService会自己滚动到setting的开发者选项页面里找到布局边界显示项并自动触发,在弹出的选择框中自动选择关闭和显示条形<br>
 
