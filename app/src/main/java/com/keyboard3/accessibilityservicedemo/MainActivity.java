@@ -3,13 +3,16 @@ package com.keyboard3.accessibilityservicedemo;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
+import android.opengl.ETC1;
 import android.os.Build;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,18 +22,24 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     int REQUEST_CODE = 101;
+    private EditText etProxy;
+    private PrefrenceUtil prefrenceUtil;
+    public static final String PROXY = "proxy";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        prefrenceUtil = PrefrenceUtil.getInstance(this);
 
         findViewById(R.id.btn_layout).setOnClickListener(this);
         findViewById(R.id.btn_overdraw).setOnClickListener(this);
         findViewById(R.id.btn_top).setOnClickListener(this);
         findViewById(R.id.btn_gpu_mode).setOnClickListener(this);
         findViewById(R.id.btn_proxy).setOnClickListener(this);
+        etProxy = findViewById(R.id.et_proxy);
+
+        etProxy.setText(prefrenceUtil.getString(PROXY, "192.168.0.200"));
     }
 
     private void showWindow() {
@@ -111,7 +120,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if ("zh".equals(Locale.getDefault().getLanguage())) {
                         key = "已连接";
                     }
-                    EventBus.getDefault().post(new OpenEvent(key, 4));
+                    OpenEvent event = new OpenEvent(key, 4);
+                    event.value = etProxy.getText().toString();
+                    if (!TextUtils.isEmpty(event.value)) {
+                        prefrenceUtil.setString(PROXY, event.value);
+                    }
+                    EventBus.getDefault().post(event);
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.setAction("android.settings.WIFI_IP_SETTINGS");
                     intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.Settings$WifiSettingsActivity"));
@@ -132,6 +146,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             this.type = type;
         }
 
+        public String value;
         public String key;
         public int type;
     }

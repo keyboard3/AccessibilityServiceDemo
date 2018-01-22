@@ -1,13 +1,20 @@
 package com.keyboard3.accessibilityservicedemo;
 
 import android.accessibilityservice.AccessibilityService;
+import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.RequiresApi;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.CheckBox;
@@ -27,6 +34,8 @@ import java.util.Locale;
 import java.util.Queue;
 import java.util.Set;
 
+import static android.view.View.FOCUS_DOWN;
+
 /**
  * @author keyboard3 on 2018/1/21
  */
@@ -34,12 +43,16 @@ import java.util.Set;
 public class MyAccessibilityService extends AccessibilityService {
     private static final String TAG = "MyAccessibilityService";
     private static String detectKey = "";
+    private static String value = "";
     private static int type = 0;
-    private static boolean isSub = false;
+    private static boolean isSub = false;//二层处理
+    private boolean startProxy = false;
+    Handler handler = new Handler();
 
     @Subscribe
     public void changeDedectKey(MainActivity.OpenEvent event) {
         detectKey = event.key;
+        value = event.value;
         type = event.type;
     }
 
@@ -55,21 +68,86 @@ public class MyAccessibilityService extends AccessibilityService {
         return super.onUnbind(intent);
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        Log.d(TAG, "packageName:" + event.getPackageName() + " eventType:" + event.getEventType());
+
         if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             EventBus.getDefault().post(new FloatingWindow.ChangeEvent(event.getPackageName().toString(), event.getClassName().toString()));
         }
         if (TextUtils.isEmpty(detectKey)) {
             return;
         }
+        Log.d(TAG, "===============packageName:" + event.getPackageName() + " className:" + event.getClassName() + " eventType:" + event.getEventType());
+        List<AccessibilityNodeInfo> collection = null;
         if ((event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED || event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED || event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) && "com.android.settings".equals(event.getPackageName())) {
-            Log.d(TAG, "AccessibilityNodeInfo:" + event.getSource().getClassName());
+            /*
+            //开启
+            collection = event.getSource().findAccessibilityNodeInfosByText("Advanced options");
+            if (type == 4 && !collection.isEmpty()) {
+                collection.get(0).performAction(AccessibilityNodeInfo.ACTION_EXPAND);
+                collection.get(1).performAction(AccessibilityNodeInfo.ACTION_EXPAND);
+                startProxy = true;
+                return;
+            }
+            if (type == 4 && startProxy && !event.getSource().findAccessibilityNodeInfosByText("Proxy").isEmpty()) {
+                event.getSource().findAccessibilityNodeInfosByText("Proxy").get(0).focusSearch(View.FOCUS_DOWN).performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                return;
+            }
+            if (type == 4 && startProxy && !event.getSource().findAccessibilityNodeInfosByText("Manual").isEmpty()) {
+                event.getSource().findAccessibilityNodeInfosByText("Manual").get(0).performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                return;
+            }
+            */
+            //wifi高级 dialog弹出 edit文本获取焦点
+            findAll(event.getSource());
+            String key = "SAVE";
+            if ("zh".equals(Locale.getDefault().getLanguage())) {
+                key = "保存";
+            }
+            collection = event.getSource().findAccessibilityNodeInfosByText(key);
+            if (type == 4 && detectKey.equals("end") && !collection.isEmpty()) {
+                for (AccessibilityNodeInfo item : collection) {
+                    if (item.getClassName().toString().contains("Button")) {
+                        item.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                        performGlobalAction(GLOBAL_ACTION_BACK);
+
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                performGlobalAction(GLOBAL_ACTION_BACK);
+                                performGlobalAction(GLOBAL_ACTION_BACK);
+                                performGlobalAction(GLOBAL_ACTION_BACK);
+                                performGlobalAction(GLOBAL_ACTION_BACK);
+                                performGlobalAction(GLOBAL_ACTION_BACK);
+                                Toast.makeText(MyAccessibilityService.this, "设置代理成功", Toast.LENGTH_SHORT).show();
+                            }
+                        }, 100);
+                        detectKey = "";
+                        return;
+                    }
+                }
+            }
+            key = "Proxy hostname";
+            if ("zh".equals(Locale.getDefault().getLanguage())) {
+                key = "代理主机名";
+            }
+            collection = event.getSource().findAccessibilityNodeInfosByText(key);
+            if (type == 4 && !detectKey.equals("end") && !collection.isEmpty()) {
+                if (!TextUtils.isEmpty(value)) {
+                    AccessibilityNodeInfo ipEdit = event.getSource().findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+                    //AccessibilityNodeInfo portEdit = event.getSource().focusSearch(FOCUS_DOWN);
+                    clearNode(ipEdit);
+                    pastNode(ipEdit, value);
+                    /*clearNode(portEdit);
+                    pastNode(portEdit, "8888");*/
+                    detectKey = "end";
+                }
+                return;
+            }
             if (isSub) {
                 AccessibilityNodeInfo ListView;
-                List<AccessibilityNodeInfo> collection;
                 switch (type) {
                     case 2:
                         String overdrawSelectItem = "Show overdraw areas";
@@ -116,7 +194,7 @@ public class MyAccessibilityService extends AccessibilityService {
                         isSub = false;
                         return;
                     case 4:
-                        String key = "Modify network";
+                        key = "Modify network";
                         if ("zh".equals(Locale.getDefault().getLanguage())) {
                             key = "管理网络设置";
                         }
@@ -129,13 +207,12 @@ public class MyAccessibilityService extends AccessibilityService {
                             return;
                         }
                         ListView.getParent().getChild(1).performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                        detectKey = "";
                         isSub = false;
                         return;
                 }
             }
             if (type == 4) {
-                List<AccessibilityNodeInfo> collection = event.getSource().findAccessibilityNodeInfosByText(detectKey);
+                collection = event.getSource().findAccessibilityNodeInfosByText(detectKey);
                 if (!collection.isEmpty()) {
                     if ("en".equals(Locale.getDefault().getLanguage())) {
                         collection.get(0).performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK);
@@ -149,7 +226,7 @@ public class MyAccessibilityService extends AccessibilityService {
             AccessibilityNodeInfo listViewNodeInfo = findNodeByClassName(event.getSource(), RecyclerView.class.getName(), ListView.class.getName());
             if (listViewNodeInfo != null) {
                 //不断滚动
-                List<AccessibilityNodeInfo> collection = new ArrayList<>();
+                collection = new ArrayList<>();
                 boolean isNotEnd = true;
                 while (collection.isEmpty() && isNotEnd) {
                     collection = listViewNodeInfo.findAccessibilityNodeInfosByText(detectKey);
@@ -183,6 +260,29 @@ public class MyAccessibilityService extends AccessibilityService {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
+    private void pastNode(AccessibilityNodeInfo ipEdit, String value) {
+        Bundle arguments = new Bundle();
+        arguments.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT,
+                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_WORD);
+        arguments.putBoolean(AccessibilityNodeInfo.ACTION_ARGUMENT_EXTEND_SELECTION_BOOLEAN,
+                true);
+        ipEdit.performAction(AccessibilityNodeInfo.ACTION_PREVIOUS_AT_MOVEMENT_GRANULARITY,
+                arguments);
+        ipEdit.performAction(AccessibilityNodeInfo.ACTION_FOCUS);
+        ClipData clip = ClipData.newPlainText("label", value);
+        ClipboardManager clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        clipboardManager.setPrimaryClip(clip);
+        ipEdit.performAction(AccessibilityNodeInfo.ACTION_PASTE);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
+    private void clearNode(AccessibilityNodeInfo edit) {
+        Bundle arguments = new Bundle();
+        arguments.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, "");
+        edit.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments);
+    }
+
     public AccessibilityNodeInfo findNodeByClassName(AccessibilityNodeInfo nodeInfo, Object... array) {
         AccessibilityNodeInfo findNodeInfo = null;
         //找到listView
@@ -209,6 +309,25 @@ public class MyAccessibilityService extends AccessibilityService {
             }
         }
         return findNodeInfo;
+    }
+
+    public void findAll(AccessibilityNodeInfo nodeInfo) {
+        Log.d(TAG, "----------开始遍历搜索----------");
+        Queue<AccessibilityNodeInfo> queue = new ArrayDeque<>();
+        queue.add(nodeInfo);
+        while (!queue.isEmpty()) {
+            AccessibilityNodeInfo itemNodeInfo = queue.poll();
+            if (itemNodeInfo == null) {
+                continue;
+            }
+            Log.d(TAG, "------迭代:" + itemNodeInfo.getClassName() + " content：" + itemNodeInfo.getText());
+            for (int i = 0; i < itemNodeInfo.getChildCount(); i++) {
+                AccessibilityNodeInfo item = itemNodeInfo.getChild(i);
+                if (item != null) {
+                    queue.offer(item);
+                }
+            }
+        }
     }
 
     @Override
