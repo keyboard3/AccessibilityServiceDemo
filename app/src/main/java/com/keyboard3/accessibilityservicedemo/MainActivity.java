@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btn_overdraw).setOnClickListener(this);
         findViewById(R.id.btn_top).setOnClickListener(this);
         findViewById(R.id.btn_gpu_mode).setOnClickListener(this);
+        findViewById(R.id.btn_proxy).setOnClickListener(this);
     }
 
     private void showWindow() {
@@ -101,6 +102,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     EventBus.getDefault().post(new OpenEvent(key, 2));
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.DevelopmentSettings"));
+                    startActivity(intent);
+                }
+                break;
+            case R.id.btn_proxy:
+                if (AccessibilityUtil.checkAccessibility(MainActivity.this)) {
+                    String key = "connected";
+                    if ("zh".equals(Locale.getDefault().getLanguage())) {
+                        key = "已连接";
+                    }
+                    EventBus.getDefault().post(new OpenEvent(key, 4));
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setAction("android.settings.WIFI_IP_SETTINGS");
+                    intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.Settings$WifiSettingsActivity"));
                     startActivity(intent);
                 }
                 break;

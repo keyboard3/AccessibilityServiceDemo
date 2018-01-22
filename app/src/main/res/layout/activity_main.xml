@@ -14,11 +14,13 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <LinearLayout
+    <com.google.android.flexbox.FlexboxLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/btn_top">
+        app:layout_constraintTop_toBottomOf="@id/btn_top"
+        app:flexWrap="wrap"
+        app:alignItems="stretch"
+        app:alignContent="stretch" >
 
         <Button
             android:id="@+id/btn_layout"
@@ -37,7 +39,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="GPU呈现模式" />
-    </LinearLayout>
-
+        <Button
+            android:id="@+id/btn_proxy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="代理服务器" />
+    </com.google.android.flexbox.FlexboxLayout>
 
 </android.support.constraint.ConstraintLayout>
