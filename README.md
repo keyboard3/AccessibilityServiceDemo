@@ -6,6 +6,7 @@
 
 # 开发工具辅助
 <img src="images/2.gif" width="500">
+<img src="images/wifi-proxy.gif" width="500">
 <br>
 
 **布局边界显示**
@@ -18,7 +19,7 @@
 <br>AccessibilityService会自己滚动到setting的开发者选项页面里找到布局边界显示项并自动触发,在弹出的选择框中自动选择关闭和显示条形<br>
 
 **代理服务器设置**
-暂不支持小米，懒得搞
+兼容genymotion（在中间过程中高级选项需要点一下）和三星（全自动），暂不支持小米，懒得搞
 
 # 栈顶class显示
 AccessibilityService会监听window_state_change时当前包名和栈顶类显示<br>

@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.btn_top).setOnClickListener(this);
         findViewById(R.id.btn_gpu_mode).setOnClickListener(this);
         findViewById(R.id.btn_proxy).setOnClickListener(this);
+        findViewById(R.id.btn_proxy_close).setOnClickListener(this);
         etProxy = findViewById(R.id.et_proxy);
 
         etProxy.setText(prefrenceUtil.getString(PROXY, "192.168.0.200"));
@@ -125,6 +126,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (!TextUtils.isEmpty(event.value)) {
                         prefrenceUtil.setString(PROXY, event.value);
                     }
+                    EventBus.getDefault().post(event);
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setAction("android.settings.WIFI_IP_SETTINGS");
+                    intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.Settings$WifiSettingsActivity"));
+                    startActivity(intent);
+                }
+                break;
+            case R.id.btn_proxy_close:
+                if (AccessibilityUtil.checkAccessibility(MainActivity.this)) {
+                    String key = "connected";
+                    if ("zh".equals(Locale.getDefault().getLanguage())) {
+                        key = "已连接";
+                    }
+                    OpenEvent event = new OpenEvent(key, 4);
+                    event.value = "";
                     EventBus.getDefault().post(event);
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.setAction("android.settings.WIFI_IP_SETTINGS");
