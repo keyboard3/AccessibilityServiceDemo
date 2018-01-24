@@ -13,11 +13,15 @@ import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.blankj.utilcode.util.DeviceUtils;
+import com.keyboard3.accessibilityservicedemo.utils.DeviceManufactuer;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -104,6 +108,7 @@ public class MyAccessibilityService extends AccessibilityService {
         }
         final AccessibilityNodeInfo rootNodeInfo = event.getSource();
         List<AccessibilityNodeInfo> collection = null;
+        Log.d(TAG, "===============packageName:" + event.getPackageName() + " className:" + event.getClassName() + " text:" + event.getContentDescription() + " eventType:" + event.getEventType() + " detectKey:" + detectKey + " value:" + value + " type:" + type + " steps:" + proxy_steps + " closesetting:" + closeSetting + " xiaomi:" + isXiaomi());
         boolean isWifiActivity = "com.android.settings.Settings$WifiSettingsActivity".equals(event.getClassName());
         if (!"com.android.settings".equals(event.getPackageName())) {
             closeSetting = false;
@@ -112,7 +117,8 @@ public class MyAccessibilityService extends AccessibilityService {
         if (closeSetting) {
             closePage();
         }
-        findAll(rootNodeInfo);
+        //findAll(rootNodeInfo);
+
         if ((event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
                 event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)) {
             String key = "";
@@ -139,7 +145,9 @@ public class MyAccessibilityService extends AccessibilityService {
                     if (!wifiAdvanceOpen(rootNodeInfo)) {
                         //点开高级选项
                         if (proxy_steps == step_wifi_manager) {
-                            proxyAdvanceClick(rootNodeInfo);
+                            if (!proxyAdvanceClick(rootNodeInfo) && isXiaomi()) {
+                                proxyHostManualClick(rootNodeInfo, false);
+                            }
                         } else if (proxy_steps == step_proxy_advance) {
                             //点击None弹出选择框
                             proxyHostManualClick(rootNodeInfo, false);
@@ -221,15 +229,16 @@ public class MyAccessibilityService extends AccessibilityService {
         proxy_steps = 0;
     }
 
+    private boolean isXiaomi() {
+        return DeviceManufactuer.xiaomi.equals(DeviceUtils.getManufacturer());
+    }
+
     private boolean proxyNoneClick(AccessibilityNodeInfo rootNodeInfo) {
-        List<AccessibilityNodeInfo> collection;
-        collection = rootNodeInfo.findAccessibilityNodeInfosByText(getStringByLocal("None", "无"));
-        if (!collection.isEmpty()) {
-            collection.get(0).performAction(AccessibilityNodeInfo.ACTION_CLICK);
-            proxy_steps = step_proxy_none;
-            return true;
-        }
-        return false;
+        rootNodeInfo = getNodeByConfig(rootNodeInfo, Config.ProxySpinnerNoneInSpinner);
+        if (rootNodeInfo == null) return false;
+        rootNodeInfo.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+        proxy_steps = step_proxy_none;
+        return true;
     }
 
     @NonNull
@@ -264,18 +273,20 @@ public class MyAccessibilityService extends AccessibilityService {
      * @param rootNodeInfo
      * @return
      */
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     private boolean proxyHostManualClick(AccessibilityNodeInfo rootNodeInfo, boolean closeManual) {
         AccessibilityNodeInfo nodeInfo;
-        nodeInfo = getNodeByConfig(rootNodeInfo, Config.ProxyHostSpinnerInCommon);
+        nodeInfo = getSingleById(rootNodeInfo, "com.android.settings:id/proxy_settings");
+        //nodeInfo = getNodeByConfig(rootNodeInfo, Config.ProxyHostSpinnerInCommon);
         if (nodeInfo != null) {
-            if (closeManual) {
+            /*if (closeManual) {
                 nodeInfo = getNodeByConfig(rootNodeInfo, Config.ProxySpinnerManualInSpinner);
             } else {
                 nodeInfo = getNodeByConfig(rootNodeInfo, Config.ProxySpinnerNoneInSpinner);
-            }
-            if (nodeInfo == null) return false;
-            AccessibilityNodeInfo spinner = nodeInfo.getParent();
+            }*/
+            //if (nodeInfo == null) return false;
+            AccessibilityNodeInfo spinner = nodeInfo;// nodeInfo.getParent();
             spinner.performAction(AccessibilityNodeInfo.ACTION_CLICK);
             proxy_steps = step_proxy_host;
             return true;
@@ -290,7 +301,7 @@ public class MyAccessibilityService extends AccessibilityService {
                 locals = getCombineLocal("Proxy Auto-Config", "自动配置");
                 break;
             case Config.ProxyHostNameInAdvance:
-                locals = getCombineLocal("Proxy hostname", "代理主机名");
+                locals = getCombineLocal("Proxy hostname", "主机名");
                 break;
             case Config.ProxyHostSpinnerInCommon:
                 locals = getCombineLocal("Proxy", "代理服务器");
@@ -308,7 +319,11 @@ public class MyAccessibilityService extends AccessibilityService {
                 locals = getCombineLocal("Advanced options", "高级选项");
                 break;
             case Config.SaveButtonInWifiDailog:
-                locals = getCombineLocal("SAVE", "保存");
+                if (isXiaomi()) {
+                    locals = getCombineLocal("SAVE", "确定");
+                } else {
+                    locals = getCombineLocal("SAVE", "保存");
+                }
                 break;
             case Config.ModifyWifiInConnectedLongClick:
                 locals = getCombineLocal("Modify network", "管理网络设置");
@@ -328,12 +343,19 @@ public class MyAccessibilityService extends AccessibilityService {
         return list.isEmpty() ? null : list.get(0);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    private AccessibilityNodeInfo getSingleById(AccessibilityNodeInfo node, String id) {
+        List<AccessibilityNodeInfo> collection = node.findAccessibilityNodeInfosByViewId(id);
+        return getSingleInArray(collection);
+    }
+
     /**
      * 将高级选项打开
      *
      * @param rootNodeInfo
      * @return
      */
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     private boolean proxyAdvanceClick(AccessibilityNodeInfo rootNodeInfo) {
         rootNodeInfo = getNodeByConfig(rootNodeInfo, Config.AdvancedOptionInAdvanceClose);
         if (rootNodeInfo != null) {
@@ -345,14 +367,22 @@ public class MyAccessibilityService extends AccessibilityService {
         return false;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     private boolean wifiAdvanceOpen(AccessibilityNodeInfo rootNodeInfo) {
-        return getNodeByConfig(rootNodeInfo, Config.ProxyHostNameInAdvance) != null;
+        return getSingleById(rootNodeInfo, "com.android.settings:id/proxy_hostname") != null;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     private void proxyDirectClick(AccessibilityNodeInfo rootNodeInfo) {
         List<AccessibilityNodeInfo> collection;
-        collection = rootNodeInfo.findAccessibilityNodeInfosByText(detectKey);
-        if (!collection.isEmpty()) {
+        if (DeviceManufactuer.xiaomi.equals(DeviceUtils.getManufacturer())) {
+            collection = rootNodeInfo.findAccessibilityNodeInfosByViewId("com.android.settings:id/detail_arrow");
+            if (collection.isEmpty()) return;
+            collection.get(0).performAction(AccessibilityNodeInfo.ACTION_CLICK);
+            proxy_steps = step_wifi_manager;
+        } else {
+            collection = rootNodeInfo.findAccessibilityNodeInfosByText(detectKey);
+            if (collection.isEmpty()) return;
             if (!isChinses()) {
                 collection.get(0).performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK);
             } else {
