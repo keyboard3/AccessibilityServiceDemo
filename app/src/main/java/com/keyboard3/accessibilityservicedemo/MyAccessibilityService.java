@@ -21,7 +21,10 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.blankj.utilcode.util.DeviceUtils;
+import com.blankj.utilcode.util.LogUtils;
+import com.blankj.utilcode.util.Utils;
 import com.keyboard3.accessibilityservicedemo.utils.DeviceManufactuer;
+import com.keyboard3.accessibilityservicedemo.window.ActivityTopView;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -44,11 +47,10 @@ public class MyAccessibilityService extends AccessibilityService {
     public static final int TYPE_OVERDRAW = 2;
     public static final int TYPE_GPU = 3;
     public static final int TYPE_PROXY = 4;
-    private static boolean closeSetting = false;
+    private static boolean scroll = false;
     private static String detectKey = "";
     private static String value = "";
     private static int type = 0;
-    private boolean startProxy = false;
     private static int proxy_steps = 0;
     private final static int step_proxy_advance = 1;
     private final static int step_proxy_host = 2;
@@ -76,7 +78,8 @@ public class MyAccessibilityService extends AccessibilityService {
     }
 
     @Subscribe
-    public void changeDedectKey(MainActivity.OpenEvent event) {
+    public void changeDirectKey(MainActivity.OpenEvent event) {
+        LogUtils.d(TAG, "changeDirectKey:" + event.toString());
         detectKey = event.key;
         value = event.value;
         type = event.type;
@@ -87,11 +90,13 @@ public class MyAccessibilityService extends AccessibilityService {
     protected void onServiceConnected() {
         super.onServiceConnected();
         EventBus.getDefault().register(this);
+        LogUtils.d(TAG, "onServiceConnected-EventBus-register");
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
         EventBus.getDefault().unregister(this);
+        LogUtils.d(TAG, "onUnbind-EventBus-onUnbind");
         return super.onUnbind(intent);
     }
 
@@ -101,42 +106,60 @@ public class MyAccessibilityService extends AccessibilityService {
     public void onAccessibilityEvent(AccessibilityEvent event) {
 
         if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            EventBus.getDefault().post(new FloatingWindow.ChangeEvent(event.getPackageName().toString(), event.getClassName().toString()));
+            EventBus.getDefault().post(new ActivityTopView.ChangeEvent(event.getPackageName().toString(), event.getClassName().toString()));
+        }
+        if (!"com.android.settings".equals(event.getPackageName())) {
+            return;
         }
         if (TextUtils.isEmpty(detectKey)) {
             return;
         }
         final AccessibilityNodeInfo rootNodeInfo = event.getSource();
         List<AccessibilityNodeInfo> collection = null;
-        Log.d(TAG, "===============packageName:" + event.getPackageName() + " className:" + event.getClassName() + " text:" + event.getContentDescription() + " eventType:" + event.getEventType() + " detectKey:" + detectKey + " value:" + value + " type:" + type + " steps:" + proxy_steps + " closesetting:" + closeSetting + " xiaomi:" + isXiaomi());
+        String log = "packageName:" + event.getPackageName() +
+                " className:" + event.getClassName() +
+                " key:" + detectKey +
+                " value:" + value +
+                " type:" + type +
+                " steps:" + proxy_steps;
         boolean isWifiActivity = "com.android.settings.Settings$WifiSettingsActivity".equals(event.getClassName());
-        if (!"com.android.settings".equals(event.getPackageName())) {
-            closeSetting = false;
-            return;
-        }
-        if (closeSetting) {
-            closePage();
-        }
         //findAll(rootNodeInfo);
-
         if ((event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
+                event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED ||
                 event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)) {
+            String typeHead = "";
+            switch (event.getEventType()) {
+                case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
+                    typeHead = "TYPE_WINDOW_STATE_CHANGED";
+                    break;
+                case AccessibilityEvent.TYPE_VIEW_SCROLLED:
+                    typeHead = "TYPE_WINDOW_STATE_CHANGED";
+                    break;
+                case AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED:
+                    typeHead = "TYPE_WINDOW_CONTENT_CHANGED";
+                    break;
+            }
+            LogUtils.d(TAG, typeHead + ":" + log);
+
             String key = "";
             //最后保存成功
             if (type == TYPE_PROXY) {
                 boolean isClose = TextUtils.isEmpty(value);
                 if (isWifiActivity && proxy_steps == 0) {
                     //代理已连接网络长按
+                    LogUtils.d(TAG, "开始-代理已连接网络长按");
                     proxyDirectClick(rootNodeInfo);
                     return;
                 }
                 if (isWifiActivity) return;
                 if (proxy_steps == step_proxy_edit || proxy_steps == step_proxy_none) {
                     // 最后保存
+                    LogUtils.d(TAG, "开始-最后保存");
                     proxySave(rootNodeInfo, isClose);
                     return;
                 } else if (proxy_steps == step_wifi_click) {
                     //wifi已连接 管理修改选项
+                    LogUtils.d(TAG, "开始-wifi已连接 管理修改选项");
                     wifiManager_click(rootNodeInfo);
                     return;
                 }
@@ -145,27 +168,35 @@ public class MyAccessibilityService extends AccessibilityService {
                     if (!wifiAdvanceOpen(rootNodeInfo)) {
                         //点开高级选项
                         if (proxy_steps == step_wifi_manager) {
+                            LogUtils.d(TAG, "开始-点开高级选项：step_wifi_manager");
                             if (!proxyAdvanceClick(rootNodeInfo) && isXiaomi()) {
+                                LogUtils.d(TAG, "开始-点击None弹出选择框 step_wifi_manager");
                                 proxyHostManualClick(rootNodeInfo, false);
                             }
                         } else if (proxy_steps == step_proxy_advance) {
                             //点击None弹出选择框
+                            LogUtils.d(TAG, "开始-点击None弹出选择框 step_proxy_advance");
                             proxyHostManualClick(rootNodeInfo, false);
                         } else if (proxy_steps == step_proxy_host) {
                             //选择框选择手动
+                            LogUtils.d(TAG, "开始-选择框选择手动 step_proxy_host");
                             proxyManualClick(rootNodeInfo);
                         }
                     } else if (proxy_steps == step_wifi_manager || proxy_steps == step_proxy_manual) {
                         //设置代理内容修改
+                        LogUtils.d(TAG, "开始-设置代理内容修改 step:" + proxy_steps);
                         proxyEdit(rootNodeInfo);
                     }
                 } else {// 关闭代理开始
                     // 点击手动 弹出选择框
                     if ((proxy_steps == step_wifi_manager)) {
+                        LogUtils.d(TAG, "开始-点击手动 弹出选择框 step_wifi_manager");
                         proxyHostManualClick(rootNodeInfo, true);
                     } else if (proxy_steps == step_proxy_host) {
                         // 弹出框显示 选择Wi-Fi关闭代理
+                        LogUtils.d(TAG, "开始-点弹出框显示 选择Wi-Fi关闭代理 step_proxy_host");
                         if (!proxyNoneClick(rootNodeInfo)) {
+                            LogUtils.d(TAG, "开始-点击手动 弹出选择框 step_proxy_host");
                             proxyHostManualClick(rootNodeInfo, true);
                         }
                     }
@@ -173,39 +204,62 @@ public class MyAccessibilityService extends AccessibilityService {
             }
             //弹出框选择 点击重新绘制
             if (proxy_steps == step_overdraw_click) {
+                LogUtils.d(TAG, "开始-弹出框选择 点击重新绘制");
                 overdraw_selected(rootNodeInfo);
                 return;
             } else if (proxy_steps == step_gpu_click) {
                 //弹出框选择 点击GPU条形
+                LogUtils.d(TAG, "开始-弹出框选择 点击GPU条形");
                 gpu_selected(rootNodeInfo);
             } else if (proxy_steps == 0) {
                 nodeInfo = findNodeByClassName(rootNodeInfo, RecyclerView.class.getName(), ListView.class.getName());
+                LogUtils.d(TAG, "找开发选项中的列表:");
                 if (nodeInfo == null) return;
-
                 collection = new ArrayList<>();
                 //不断滚动找到制定项
                 boolean isNotEnd = true;
                 collection = listViewScrollToFind(collection, nodeInfo, isNotEnd);
 
+                /*
+                collection = nodeInfo.findAccessibilityNodeInfosByText(detectKey);
+                LogUtils.d(TAG, "找开发选项中的列表:" + nodeInfo.getClassName() + " 找选项Item：" + detectKey + " all-size:" + nodeInfo.getChildCount());
+                if (collection.size() <= 0) {
+                    //不断滚动找到制定项
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            listViewScrollToFind(nodeInfo);
+                        }
+                    }, 100);
+                    Log.d(TAG, "没找到 继续滚");
+                    return;
+                }*/
+
                 if (!collection.isEmpty()) {
+                    LogUtils.d(TAG, "获取选中项");
                     AccessibilityNodeInfo selectNodeInfo = collection.get(0);
                     //找到了就拿到父view 然后从中 找到 按钮
                     AccessibilityNodeInfo parent = selectNodeInfo.getParent();
+                    if (parent == null) return;
+                    LogUtils.d(TAG, "找到点击项");
                     if (type == TYPE_LAYOUT) {
                         //点击边界显示
                         parent.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                         closePage();
+                        LogUtils.d(TAG, "找到点击项");
                     } else if (type == TYPE_OVERDRAW) {
                         //点击重新绘制
                         parent.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                         proxy_steps = step_overdraw_click;
+                        LogUtils.d(TAG, "点击重新绘制");
                     } else if (type == TYPE_GPU) {
                         //点击条形显示
                         parent.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                         proxy_steps = step_gpu_click;
+                        LogUtils.d(TAG, "点击条形显示");
                     }
                 } else {
-                    Toast.makeText(this, "没有找到该项", Toast.LENGTH_SHORT).show();
+                    LogUtils.d(TAG, "没有找到该项");
                 }
             }
         }
@@ -213,7 +267,6 @@ public class MyAccessibilityService extends AccessibilityService {
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     private void closePage() {
-        closeSetting = true;
         performGlobalAction(GLOBAL_ACTION_BACK);
         performGlobalAction(GLOBAL_ACTION_BACK);
         handler.postDelayed(new Runnable() {
@@ -255,6 +308,20 @@ public class MyAccessibilityService extends AccessibilityService {
             }
         }
         return collection;
+    }
+
+    @NonNull
+    private void listViewScrollToFind(AccessibilityNodeInfo listViewNodeInfo) {
+        if (listViewNodeInfo == null) return;
+        findAll(listViewNodeInfo);
+        boolean isNotEnd = listViewNodeInfo.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD);
+        LogUtils.d(TAG, "向前滚动:" + isNotEnd);
+        if (!isNotEnd) {
+            isNotEnd = listViewNodeInfo.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD);
+            LogUtils.d(TAG, "没找到向后滚动:" + isNotEnd);
+        } else {
+            LogUtils.d(TAG, "没找到向前滚动:" + isNotEnd);
+        }
     }
 
     private boolean proxyManualClick(AccessibilityNodeInfo nodeInfo) {
@@ -560,10 +627,13 @@ public class MyAccessibilityService extends AccessibilityService {
     }
 
     public void findAll(AccessibilityNodeInfo nodeInfo) {
+        if (nodeInfo == null) return;
+        StringBuilder tree = new StringBuilder();
         Queue<AccessibilityNodeInfo> queue = new ArrayDeque<>();
         queue.add(nodeInfo);
         while (!queue.isEmpty()) {
             AccessibilityNodeInfo itemNodeInfo = queue.poll();
+            tree.append("(" + itemNodeInfo.getClassName() + "-" + itemNodeInfo.getContentDescription() + ")\n");
             if (itemNodeInfo == null) {
                 continue;
             }
@@ -574,6 +644,7 @@ public class MyAccessibilityService extends AccessibilityService {
                 }
             }
         }
+        LogUtils.d(TAG, tree.toString());
     }
 
     @Override

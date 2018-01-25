@@ -1,10 +1,12 @@
-package com.keyboard3.accessibilityservicedemo;
+package com.keyboard3.accessibilityservicedemo.window;
 
 import android.content.Context;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.keyboard3.accessibilityservicedemo.R;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -14,25 +16,20 @@ import org.greenrobot.eventbus.ThreadMode;
  * @author keyboard3 on 2018/1/21
  */
 
-public class FloatingWindow extends LinearLayout {
+public class ActivityTopView extends BaseFloatingView {
 
-    private final FloatingWindowManager mFwm;
-    private final Context mContext;
     private TextView mTvPckage;
     private TextView mTvClass;
     private TextView mTvClose;
-    private int downX;
-    private int downY;
 
-    public FloatingWindow(Context context, FloatingWindowManager windowManager) {
-        super(context);
-        mContext = context;
-        mFwm = windowManager;
+    public ActivityTopView(Context context, FloatingWindowManager windowManager) {
+        super(context, windowManager);
         initView();
     }
 
-    private void initView() {
-        inflate(mContext, R.layout.layout_floating, this);
+    @Override
+    protected void initView() {
+        inflate(mContext, R.layout.layout_floating_activity_top, this);
 
         mTvPckage = findViewById(R.id.tv_package);
         mTvClass = findViewById(R.id.tv_class);
@@ -40,7 +37,7 @@ public class FloatingWindow extends LinearLayout {
         mTvClose.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                mFwm.removeView();
+                mFwm.removeView(ActivityTopView.this);
             }
         });
     }
@@ -71,26 +68,5 @@ public class FloatingWindow extends LinearLayout {
 
         public String packageName;
         public String className;
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                downX = (int) event.getRawX();
-                downY = (int) event.getRawY();
-                break;
-            case MotionEvent.ACTION_MOVE:
-                int x = (int) event.getRawX();
-                int y = (int) event.getRawY();
-                FloatingWindowManager.layout_params.x += x - downX;
-                FloatingWindowManager.layout_params.y += y - downY;
-                mFwm.mWm.updateViewLayout(this, FloatingWindowManager.layout_params);
-                downX = x;
-                downY = y;
-                break;
-            default:
-        }
-        return super.onTouchEvent(event);
     }
 }

@@ -1,33 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.keyboard3.accessibilityservicedemo.MainActivity">
-
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@color/windowBackground">
 
     <com.google.android.flexbox.FlexboxLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:alignContent="stretch"
         app:alignItems="stretch"
-        app:flexWrap="wrap">
-
-        <Button
-            android:id="@+id/btn_start"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="启动悬浮球"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+        app:flexWrap="wrap"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <Button
             android:id="@+id/btn_top"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Activity栈顶"
+            android:text="页面栈顶"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -36,25 +29,25 @@
             android:id="@+id/btn_layout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="布局边界显示" />
+            android:text="布局边界" />
 
         <Button
             android:id="@+id/btn_overdraw"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="过度绘制显示" />
+            android:text="过度绘制" />
 
         <Button
             android:id="@+id/btn_gpu_mode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="GPU呈现模式" />
+            android:text="GPU呈现" />
 
         <Button
             android:id="@+id/btn_proxy"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="代理服务器" />
+            android:text="代理服务" />
 
         <EditText
             android:id="@+id/et_proxy"
@@ -67,6 +60,18 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="关闭代理" />
+
+        <TextView
+            android:id="@+id/tv_close"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:text="关闭"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
     </com.google.android.flexbox.FlexboxLayout>
+
 
 </android.support.constraint.ConstraintLayout>

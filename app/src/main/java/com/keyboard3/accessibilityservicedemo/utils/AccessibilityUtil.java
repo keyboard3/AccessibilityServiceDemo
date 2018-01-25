@@ -1,4 +1,4 @@
-package com.keyboard3.accessibilityservicedemo;
+package com.keyboard3.accessibilityservicedemo.utils;
 
 import android.content.Context;
 import android.content.Intent;
