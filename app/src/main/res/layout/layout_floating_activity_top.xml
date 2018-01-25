@@ -6,28 +6,19 @@
     android:layout_height="wrap_content"
     android:background="@color/windowBackground"
     android:paddingBottom="5dp"
-    android:paddingLeft="8dp"
-    android:paddingRight="5dp"
-    android:paddingTop="5dp">
+    android:paddingLeft="8dp">
 
-    <TextView
-        android:id="@+id/tv_close"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="关"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tv_package"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginRight="15dp"
+        android:layout_marginRight="18dp"
         app:layout_constraintBottom_toTopOf="@id/tv_class"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="package" />
+        tools:text="packagepackage" />
 
     <TextView
         android:id="@+id/tv_class"
@@ -39,4 +30,12 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_package"
         tools:text="className" />
+
+    <ImageView
+        android:id="@+id/iv_close"
+        android:layout_width="15dp"
+        android:layout_height="15dp"
+        android:src="@drawable/ic_close"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </android.support.constraint.ConstraintLayout>

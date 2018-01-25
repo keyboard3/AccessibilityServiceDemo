@@ -3,6 +3,7 @@ package com.keyboard3.accessibilityservicedemo.window;
 import android.content.Context;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -20,7 +21,7 @@ public class ActivityTopView extends BaseFloatingView {
 
     private TextView mTvPckage;
     private TextView mTvClass;
-    private TextView mTvClose;
+    private ImageView iv_close;
 
     public ActivityTopView(Context context, FloatingWindowManager windowManager) {
         super(context, windowManager);
@@ -33,8 +34,8 @@ public class ActivityTopView extends BaseFloatingView {
 
         mTvPckage = findViewById(R.id.tv_package);
         mTvClass = findViewById(R.id.tv_class);
-        mTvClose = findViewById(R.id.tv_close);
-        mTvClose.setOnClickListener(new OnClickListener() {
+        iv_close = findViewById(R.id.iv_close);
+        iv_close.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 mFwm.removeView(ActivityTopView.this);

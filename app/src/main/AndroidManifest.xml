@@ -38,7 +38,7 @@
 
         <activity
             android:name=".ProxyEditActivity"
-            android:theme="@style/Theme.Transparent"></activity>
+            android:theme="@style/AppTheme.Dialog"></activity>
     </application>
 
 </manifest>

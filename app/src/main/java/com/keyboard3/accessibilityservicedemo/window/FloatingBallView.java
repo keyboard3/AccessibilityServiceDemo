@@ -1,8 +1,10 @@
 package com.keyboard3.accessibilityservicedemo.window;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.View;
 
+import com.keyboard3.accessibilityservicedemo.ProxyEditActivity;
 import com.keyboard3.accessibilityservicedemo.R;
 
 /**
@@ -22,8 +24,9 @@ public class FloatingBallView extends BaseFloatingView {
         setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                FloatingWindowManager fwm = new FloatingWindowManager(mContext);
-                fwm.addView(new FloatingContentView(mContext, fwm));
+                Intent intent = new Intent(mContext, ProxyEditActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                mContext.startActivity(intent);
             }
         });
     }

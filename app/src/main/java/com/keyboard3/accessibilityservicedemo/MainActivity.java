@@ -17,9 +17,6 @@ import com.keyboard3.accessibilityservicedemo.window.FloatingWindowManager;
 
 public class MainActivity extends AppCompatActivity {
     int REQUEST_CODE = 101;
-    private EditText etProxy;
-    private PrefrenceUtil prefrenceUtil;
-    public static final String PROXY = "proxy";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
