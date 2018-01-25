@@ -31,7 +31,7 @@ public class FloatingWindowManager {
         layoutParams.gravity = Gravity.LEFT | Gravity.TOP;
         layoutParams.type = WindowManager.LayoutParams.TYPE_PHONE;
         layoutParams.format = PixelFormat.RGBA_8888;
-        layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+        layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         layout_params = layoutParams;
     }
 

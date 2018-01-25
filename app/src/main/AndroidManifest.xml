@@ -3,7 +3,7 @@
     package="com.keyboard3.accessibilityservicedemo">
 
     <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"></uses-permission>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <application
@@ -21,8 +21,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".ServiceSettingsActivity"></activity>
+        <activity android:name=".ServiceSettingsActivity" />
 
         <service
             android:name=".MyAccessibilityService"
@@ -31,10 +30,15 @@
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
+
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+
+        <activity
+            android:name=".ProxyEditActivity"
+            android:theme="@style/Theme.Transparent"></activity>
     </application>
 
 </manifest>

@@ -1,5 +1,6 @@
 package com.keyboard3.accessibilityservicedemo.window;
 
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -11,6 +12,7 @@ import android.widget.Toast;
 
 import com.keyboard3.accessibilityservicedemo.MainActivity;
 import com.keyboard3.accessibilityservicedemo.MyAccessibilityService;
+import com.keyboard3.accessibilityservicedemo.ProxyEditActivity;
 import com.keyboard3.accessibilityservicedemo.R;
 import com.keyboard3.accessibilityservicedemo.utils.AccessibilityUtil;
 import com.keyboard3.accessibilityservicedemo.utils.PrefrenceUtil;
@@ -24,9 +26,6 @@ import java.util.Locale;
  */
 
 public class FloatingContentView extends BaseFloatingView implements View.OnClickListener {
-    private EditText etProxy;
-    private PrefrenceUtil prefrenceUtil;
-    public static final String PROXY = "proxy";
     private FloatingWindowManager fwm;
 
     public FloatingContentView(Context context, FloatingWindowManager windowManager) {
@@ -36,8 +35,6 @@ public class FloatingContentView extends BaseFloatingView implements View.OnClic
 
     @Override
     protected void initView() {
-        prefrenceUtil = PrefrenceUtil.getInstance(mContext);
-
         inflate(mContext, R.layout.layout_floating_content, this);
         findViewById(R.id.btn_layout).setOnClickListener(this);
         findViewById(R.id.btn_overdraw).setOnClickListener(this);
@@ -46,8 +43,6 @@ public class FloatingContentView extends BaseFloatingView implements View.OnClic
         findViewById(R.id.btn_proxy).setOnClickListener(this);
         findViewById(R.id.btn_proxy_close).setOnClickListener(this);
         findViewById(R.id.tv_close).setOnClickListener(this);
-        etProxy = findViewById(R.id.et_proxy);
-        etProxy.setText(prefrenceUtil.getString(PROXY, "192.168.0.200"));
         fwm = new FloatingWindowManager(mContext);
     }
 
@@ -70,7 +65,7 @@ public class FloatingContentView extends BaseFloatingView implements View.OnClic
             case R.id.btn_gpu_mode:
                 if (AccessibilityUtil.checkAccessibility(mContext)) {
                     String key = "Profile GPU rendering";//Show layout bounds
-                    if ("zh".equals(Locale.getDefault().getLanguage())) {
+                    if ("zh".equals(Locale.getDefault().getLanguage ())) {
                         String model = android.os.Build.MODEL;
                         if (model.startsWith("SM")) {
                             key = "GPU 显示";
@@ -100,21 +95,10 @@ public class FloatingContentView extends BaseFloatingView implements View.OnClic
                 break;
             case R.id.btn_proxy:
                 if (AccessibilityUtil.checkAccessibility(mContext)) {
-                    String key = "connected";
-                    if ("zh".equals(Locale.getDefault().getLanguage())) {
-                        key = "已连接";
-                    }
-                    MainActivity.OpenEvent event = new MainActivity.OpenEvent(key, MyAccessibilityService.TYPE_PROXY);
-                    event.value = etProxy.getText().toString();
-                    if (!TextUtils.isEmpty(event.value)) {
-                        prefrenceUtil.setString(PROXY, event.value);
-                    }
-                    EventBus.getDefault().post(event);
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setAction("android.settings.WIFI_IP_SETTINGS");
-                    intent.setComponent(new ComponentName("com.android.settings", "com.android.settings.Settings$WifiSettingsActivity"));
+                    Intent intent = new Intent(mContext, ProxyEditActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     mContext.startActivity(intent);
-                    removeWindow();
+                    //removeWindow();
                 }
                 break;
             case R.id.btn_proxy_close:
